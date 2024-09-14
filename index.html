@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Expense Tracker</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div id="container">
+        <input id="dateInput" type="date" placeholder="Select Date">
+        <select id="type">
+            <option disabled selected value="">Please Select an Option</option>
+            <option value="Food">Food</option>
+            <option value="Clothing">Clothing</option>
+            <option value="Transportation">Transportation</option>
+            <option value="Debt">Debt</option>
+            <option value="Education">Education</option>
+            <option value="Miscellaneous">Miscellaneous</option>
+        </select>
+        <input id="amountInput" type="number" placeholder="Amount">
+        <input id="descriptionInput" type="text" placeholder="Description">
+        <button id="button" class="btn">Add Expense</button>
+    </div>
+    
+    <div id="table-container">
+        <table id="table">
+            <tr>
+                <th>Date</th>
+                <th>Type</th>
+                <th>Amount</th>
+                <th>Description</th>
+                <th>Actions</th>
+            </tr>
+        </table>
+    </div> 
+
+    <script>
+    let button = document.getElementById('button');
+    let DATE = document.getElementById('dateInput');
+    let AMOUNT = document.getElementById('amountInput');
+    let DESCRIPTION = document.getElementById('descriptionInput');
+    let TYPE = document.getElementById('type');
+    let table = document.getElementById('table');
+    let class_name;
+    let expense_records = [];
+    let editIndex = -1; // Track the index of the expense being edited
+
+    if(localStorage.getItem('expense_records')) {
+        expense_records = JSON.parse(localStorage.getItem('expense_records'));
+        renderTable();
+    }
+
+    function add_expense() {
+        let DATE_OBJECT = new Date(DATE.value);
+        let FORMATTED_DATE = DATE_OBJECT.toLocaleDateString('en-US', {month:'2-digit', day:'2-digit', year:'numeric'});
+
+        let date = FORMATTED_DATE;
+        let type = TYPE.value;
+        let amount = AMOUNT.value;
+        let description = DESCRIPTION.value;
+
+        switch(TYPE.value) {
+            case 'Food': class_name ='food'; break;
+            case 'Clothing': class_name ='clothing'; break;
+            case 'Transportation': class_name ='transportation'; break;
+            case 'Debt': class_name ='debt'; break;
+            case 'Education': class_name ='education'; break;
+            case 'Miscellaneous': class_name ='miscellaneous'; break;
+        }
+
+        if(editIndex === -1) {
+            expense_records.push({date, type, amount, description, class_name});
+        } else {
+            expense_records[editIndex] = {date, type, amount, description, class_name};
+            editIndex = -1; // Reset editIndex after updating
+            button.textContent = "Add Expense"; // Reset button text
+        }
+
+        updateLocalStorage();
+        renderTable();
+        clearInputs();
+    }
+
+    function edit_expense(index) {
+        let expense = expense_records[index];
+        DATE.value = new Date(expense.date).toISOString().split('T')[0];
+        TYPE.value = expense.type;
+        AMOUNT.value = expense.amount;
+        DESCRIPTION.value = expense.description;
+        editIndex = index;
+        button.textContent = "Update Expense"; // Change button text to "Update Expense"
+    }
+
+    function delete_expense(index) {
+        expense_records.splice(index, 1);
+        updateLocalStorage();
+        renderTable();
+    }
+
+    function renderTable() {
+        table.innerHTML = `<tr>
+            <th>Date</th>
+            <th>Type</th>
+            <th>Amount</th>
+            <th>Description</th>
+            <th>Actions</th>
+            </tr>`;
+        expense_records.forEach((expense, index) =>{
+            let color_code = expense.class_name;
+            table.innerHTML += `<tr>
+                <td class="${color_code}">${expense.date}</td>
+                <td class="${color_code}">${expense.type}</td>
+                <td class="${color_code}">${expense.amount}</td>
+                <td class="${color_code}">${expense.description}</td>
+                <td class="${color_code}">
+                    <button onclick="edit_expense(${index})" class="btn-edit btn-sm">Edit</button>
+                    <button onclick="delete_expense(${index})" class="btn-delete btn-sm">Delete</button>
+                </td>
+                </tr>`;
+        });
+    }
+
+    function updateLocalStorage() {
+        localStorage.setItem('expense_records', JSON.stringify(expense_records));
+    }
+
+    function clearInputs() {
+        DATE.value = '';
+        TYPE.value = '';
+        AMOUNT.value = '';
+        DESCRIPTION.value = '';
+    }
+
+    button.addEventListener('click', add_expense);
+    </script>
+</body>
+</html>
